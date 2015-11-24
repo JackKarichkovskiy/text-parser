@@ -1,0 +1,20 @@
+﻿	This is a text with some code. Another sentence.
+	
+	Some Text!!!
+	public class A{
+	private int a = 10;
+	public A(){
+		a = 20;
+	}
+	public setA(){
+		a = 30;
+	}
+}
+	Text, again...
+	public class B extends A{}
+	private class C implements D{
+		private String text;
+	}
+	
+	
+	Мы можем, приступая к разработке проекта, записать его в виде иерархии интерфейсов, не думая о реализации, а затем построить по этому проекту иерархию классов, учитывая ограничения одиночного наследования и видимости членов классов.
