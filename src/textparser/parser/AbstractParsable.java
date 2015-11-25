@@ -12,13 +12,20 @@ import textparser.utils.TextParserUtils;
 import textparser.word.Word;
 
 /**
+ * Class that has some basic realization of Parsable interface.
  *
  * @author Karichkovskiy Yevhen
  */
 public abstract class AbstractParsable implements Parsable {
 
+    /**
+     * Stores origin string of parsed element;
+     */
     protected String originStr;
 
+    /**
+     * List of parsed elements.
+     */
     protected final List<Parsable> parsedList = new ArrayList<>();
 
     @Override
