@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import textparser.parser.AbstractParsable;
 import textparser.parser.Parsable;
 import textparser.symbol.delimiter.Delimiter;
 import textparser.utils.TextParserUtils;
@@ -21,7 +22,7 @@ import textparser.word.Word;
  *
  * @author Karichkovskiy Yevhen
  */
-public class Initializer implements Parsable {
+public class Initializer extends AbstractParsable {
 
     /**
      * Regex pattern for initializer validating.
@@ -33,73 +34,41 @@ public class Initializer implements Parsable {
      */
     private final Pattern wordPattern = Regex.IS_IDENTIFIER.getPattern();
 
-    /**
-     * The origin initializer string.
-     */
-    private String initializer;
-    
-    /**
-     * The list of words and delimiters of initializer.
-     */
-    private final List<Parsable> wordsAndDelimiters = new ArrayList<>();
-
     public Initializer(String initializer) {
-        this.initializer = checkInitializer(initializer);
+        super.originStr = checkInitializer(initializer);
     }
 
     @Override
     public void parse() {
-        Matcher matcher = wordPattern.matcher(initializer);
+        Matcher matcher = wordPattern.matcher(super.originStr);
 
-        if (!initializer.isEmpty()) {
-            wordsAndDelimiters.add(new Delimiter(initializer.charAt(0))); //{ - symbol added to list !!!!!!!
+        if (!super.originStr.isEmpty()) {
+            super.parsedList.add(new Delimiter(super.originStr.charAt(0))); //{ - symbol added to list !!!!!!!
         }
 
         while (matcher.find()) {
             Word word = new Word(matcher.group().trim());
             word.parse();
-            wordsAndDelimiters.add(word);
+            super.parsedList.add(word);
 
             char delimiter = ' ';
-            for (int i = matcher.end(); i < initializer.length() && Delimiter.isCodeDelimiter(delimiter = initializer.charAt(i)); i++) {
-                wordsAndDelimiters.add(new Delimiter(delimiter));
+            for (int i = matcher.end(); i < super.originStr.length() && Delimiter.isCodeDelimiter(delimiter = super.originStr.charAt(i)); i++) {
+                super.parsedList.add(new Delimiter(delimiter));
             }
         }
-    }
-
-    @Override
-    public String compose() {
-        StringBuilder strBuf = new StringBuilder();
-
-        wordsAndDelimiters.stream().forEach((parseObj) -> {
-            strBuf.append(parseObj.compose());
-        });
-
-        return strBuf.toString();
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable sentencePart : wordsAndDelimiters) {
-            result.addAll(sentencePart.getWords());
-        }
-
-        return result;
     }
 
     @Override
     public void pollOrderedWords(Queue<Word> queue) {
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (int i = 0; i < wordsAndDelimiters.size(); i++) {
+        for (int i = 0; i < super.parsedList.size(); i++) {
             if (queue.isEmpty()) {
                 break;
             }
 
-            if (wordsAndDelimiters.get(i) instanceof Word) {
-                wordsAndDelimiters.set(i, queue.poll());
+            if (super.parsedList.get(i) instanceof Word) {
+                super.parsedList.set(i, queue.poll());
             }
         }
     }
@@ -113,7 +82,7 @@ public class Initializer implements Parsable {
                 + "int i = 0;\n"
                 + "for(int i = 0; i<10; i++);\n}  ").trim());
         initializer.parse();
-        System.out.println(initializer.wordsAndDelimiters);
+        System.out.println(initializer.parsedList);
         System.out.println(initializer.compose());
         System.out.println(initializer.getWords());
     }

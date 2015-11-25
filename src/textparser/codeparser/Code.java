@@ -15,13 +15,14 @@ import textparser.utils.TextParserUtils;
 import textparser.utils.regex.Regex;
 import textparser.word.Word;
 import textparser.codeparser.clazz.Class;
+import textparser.parser.AbstractParsable;
 
 /**
  * Class represents the code part of the text.
  *
  * @author Karichkovskiy Yevhen
  */
-public class Code implements Parsable {
+public class Code extends AbstractParsable {
 
     /**
      * Regex pattern for code validating.
@@ -33,41 +34,31 @@ public class Code implements Parsable {
      */
     private final Pattern classPattern = Regex.IS_CLASS.getPattern();
 
-    /**
-     * String that contains an origin(non-parsed) code.
-     */
-    private final String code;
-    
-    /**
-     * The list of parsed classes.
-     */
-    private final List<Parsable> classes = new ArrayList<>();
-
     public Code(String code) {
-        this.code = TextParserUtils.checkRegex(code, codePattern);
+        super.originStr = TextParserUtils.checkRegex(code, codePattern);
     }
 
     @Override
     public void parse() {
-        Matcher matcher = classPattern.matcher(code);
+        Matcher matcher = classPattern.matcher(super.originStr);
 
         while (matcher.find()) {
             Class clazz = new Class(matcher.group().trim());
             clazz.parse();
-            classes.add(clazz);
+            super.parsedList.add(clazz);
         }
 
     }
 
     @Override
     public String compose() {
-        if (classes.isEmpty()) {
+        if (super.parsedList.isEmpty()) {
             return "";
         }
 
         StringBuilder strBuf = new StringBuilder();
 
-        classes.stream().forEach((parseObj) -> {
+        super.parsedList.stream().forEach((parseObj) -> {
             strBuf.append(parseObj.compose()).append("\n");
         });
 
@@ -76,27 +67,7 @@ public class Code implements Parsable {
 
     @Override
     public String toString() {
-        return "Code{" + "code=" + code + '}';
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable clazz : classes) {
-            result.addAll(clazz.getWords());
-        }
-
-        return result;
-    }
-
-    @Override
-    public void pollOrderedWords(Queue<Word> queue) {
-        queue = TextParserUtils.checkNotNull(queue);
-
-        for (Parsable clazz : classes) {
-            clazz.pollOrderedWords(queue);
-        }
+        return "Code{" + "code=" + super.originStr + '}';
     }
 
     public static void main(String[] args) {
@@ -113,7 +84,7 @@ public class Code implements Parsable {
                 + "}\n"
                 + "}\n");
         code.parse();
-        System.out.println(code.classes);
+        System.out.println(code.parsedList);
         System.out.println(code.compose());
         System.out.println(code.getWords());
     }

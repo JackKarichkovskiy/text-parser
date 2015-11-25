@@ -5,7 +5,6 @@
  */
 package textparser.parser;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -21,7 +20,7 @@ import textparser.word.Word;
  * The class that parses the text.
  * @author Karichkovskiy Yevhen
  */
-public class TextParser implements Parsable {
+public class TextParser extends AbstractParsable {
 
     /**
      * Regex pattern for paragraph validating.
@@ -33,24 +32,14 @@ public class TextParser implements Parsable {
      */
     private final Pattern codePattern = Regex.IS_CODE.getPattern();
 
-    /**
-     * The origin text string.
-     */
-    private final String text;
-
-    /**
-     * The list of paragraphs and codes in text.
-     */
-    private final List<Parsable> paragraphsAndCodes = new ArrayList<>();
-
     public TextParser(String text) {
-        this.text = TextParserUtils.checkNotNull(text);
+        super.originStr = TextParserUtils.checkNotNull(text);
     }
 
     @Override
     public void parse() {
-        Matcher paragraphMatcher = paragraphPattern.matcher(text);
-        Matcher codeMatcher = codePattern.matcher(text);
+        Matcher paragraphMatcher = paragraphPattern.matcher(super.originStr);
+        Matcher codeMatcher = codePattern.matcher(super.originStr);
 
         int textIndex = 0;
         int paragraphIndex = paragraphMatcher.find(textIndex) ? paragraphMatcher.start() : Integer.MAX_VALUE;
@@ -62,7 +51,7 @@ public class TextParser implements Parsable {
                 String paragraphStr = paragraphMatcher.group();
                 Paragraph paragraph = new Paragraph(paragraphStr);
                 paragraph.parse();
-                paragraphsAndCodes.add(paragraph);
+                super.parsedList.add(paragraph);
                 textIndex = paragraphMatcher.end();
                 continue;
             }
@@ -72,7 +61,7 @@ public class TextParser implements Parsable {
                 String codeStr = codeMatcher.group();
                 Code code = new Code(codeStr);
                 code.parse();
-                paragraphsAndCodes.add(code);
+                super.parsedList.add(code);
                 textIndex = codeMatcher.end();
                 continue;
             }
@@ -82,7 +71,7 @@ public class TextParser implements Parsable {
             String paragraphStr = paragraphMatcher.group();
             Paragraph paragraph = new Paragraph(paragraphStr);
             paragraph.parse();
-            paragraphsAndCodes.add(paragraph);
+            super.parsedList.add(paragraph);
             textIndex = paragraphMatcher.end();
         }
 
@@ -90,44 +79,10 @@ public class TextParser implements Parsable {
             String codeStr = codeMatcher.group();
             Code code = new Code(codeStr);
             code.parse();
-            paragraphsAndCodes.add(code);
+            super.parsedList.add(code);
             textIndex = codeMatcher.end();
         }
 
-    }
-
-    @Override
-    public String compose() {
-        if (paragraphsAndCodes.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder strBuf = new StringBuilder();
-        paragraphsAndCodes.stream().forEach((parseObj) -> {
-            strBuf.append(parseObj.compose());
-        });
-
-        return strBuf.toString();
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable textPart : paragraphsAndCodes) {
-            result.addAll(textPart.getWords());
-        }
-
-        return result;
-    }
-
-    @Override
-    public void pollOrderedWords(Queue<Word> queue) {
-        queue = TextParserUtils.checkNotNull(queue);
-
-        for (Parsable textPart : paragraphsAndCodes) {
-            textPart.pollOrderedWords(queue);
-        }
     }
 
     public Queue<Word> sortByCharCountInWord(char character) {
@@ -159,7 +114,7 @@ public class TextParser implements Parsable {
                 + "Some code dsfj lkasd sd jlkdsa.sjdkafj l\n"
                 + "\tТекст, снова...\npublic class A{}\n");
         textParser.parse();
-        System.out.println(textParser.paragraphsAndCodes);
+        System.out.println(textParser.parsedList);
         System.out.println(textParser.getWords());
         Queue<Word> orderedWords = textParser.sortByCharCountInWord('t');
         System.out.println(orderedWords);

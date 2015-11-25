@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import textparser.parser.AbstractParsable;
 import textparser.parser.Parsable;
 import textparser.symbol.delimiter.Delimiter;
 import textparser.utils.TextParserUtils;
@@ -20,7 +21,7 @@ import textparser.word.Word;
  * Class represents the constructor of class.
  * @author Karichkovskiy Yevhen
  */
-public class Constructor implements Parsable{
+public class Constructor extends AbstractParsable{
 
     /**
      * Regex pattern for constructor validating.
@@ -32,32 +33,22 @@ public class Constructor implements Parsable{
      */
     private final Pattern wordPattern = Regex.IS_IDENTIFIER.getPattern();
     
-    /**
-     * The string contains the origin constructor;
-     */
-    private String constructor;
-    
-    /**
-     * The list of words and delimiters of constructor.
-     */
-    private final List<Parsable> wordsAndDelimiters = new ArrayList<>();
-    
     public Constructor(String constructor) {
-        this.constructor = checkMethod(constructor);
+        super.originStr = checkMethod(constructor);
     }
     
     @Override
     public void parse() {
-        Matcher matcher = wordPattern.matcher(constructor);
+        Matcher matcher = wordPattern.matcher(super.originStr);
 
         while (matcher.find()) {
             Word word = new Word(matcher.group().trim());
             word.parse();
-            wordsAndDelimiters.add(word);
+            super.parsedList.add(word);
 
             char delimiter = ' ';
-            for (int i = matcher.end(); i < constructor.length() && Delimiter.isCodeDelimiter(delimiter = constructor.charAt(i)); i++) {
-                wordsAndDelimiters.add(new Delimiter(delimiter));
+            for (int i = matcher.end(); i < super.originStr.length() && Delimiter.isCodeDelimiter(delimiter = super.originStr.charAt(i)); i++) {
+                super.parsedList.add(new Delimiter(delimiter));
             }
         }
     }
@@ -66,7 +57,7 @@ public class Constructor implements Parsable{
     public String compose() {
         StringBuilder strBuf = new StringBuilder();
 
-        wordsAndDelimiters.stream().forEach((parseObj) -> {
+        super.parsedList.stream().forEach((parseObj) -> {
             strBuf.append(parseObj.compose());
         });
 
@@ -77,7 +68,7 @@ public class Constructor implements Parsable{
     public List<Word> getWords() {
         List<Word> result = new ArrayList<>();
 
-        for (Parsable sentencePart : wordsAndDelimiters) {
+        for (Parsable sentencePart : super.parsedList) {
             result.addAll(sentencePart.getWords());
         }
 
@@ -88,13 +79,13 @@ public class Constructor implements Parsable{
     public void pollOrderedWords(Queue<Word> queue) {
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (int i = 0; i < wordsAndDelimiters.size(); i++) {
+        for (int i = 0; i < super.parsedList.size(); i++) {
             if (queue.isEmpty()) {
                 break;
             }
 
-            if (wordsAndDelimiters.get(i) instanceof Word) {
-                wordsAndDelimiters.set(i, queue.poll());
+            if (super.parsedList.get(i) instanceof Word) {
+                super.parsedList.set(i, queue.poll());
             }
         }
     }
@@ -108,7 +99,7 @@ public class Constructor implements Parsable{
                 + "int i = 0;\n"
                 + "for(int i = 0; i<10; i++);\n}  ").trim());
         constructor.parse();
-        System.out.println(constructor.wordsAndDelimiters);
+        System.out.println(constructor.parsedList);
         System.out.println(constructor.compose());
         System.out.println(constructor.getWords());
     }    

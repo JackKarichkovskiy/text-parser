@@ -5,12 +5,10 @@
  */
 package textparser.codeparser.clazz;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import textparser.parser.Parsable;
+import textparser.parser.AbstractParsable;
 import textparser.symbol.delimiter.Delimiter;
 import textparser.utils.TextParserUtils;
 import textparser.utils.regex.Regex;
@@ -21,7 +19,7 @@ import textparser.word.Word;
  *
  * @author Karichkovskiy Yevhen
  */
-public class Class implements Parsable {
+public class Class extends AbstractParsable {
 
     /**
      * Regex pattern for class validating.
@@ -47,76 +45,44 @@ public class Class implements Parsable {
         Regex.IS_CONSTRUCTOR.getPattern(),
         Regex.IS_METHOD.getPattern(),};
 
-    /**
-     * The string that contains the origin class.
-     */
-    private String clazz;
-    
-    /**
-     * The list of words and delimiters in class.
-     */
-    private final List<Parsable> wordsAndDelimiters = new ArrayList<>();
-
     public Class(String clazz) {
-        this.clazz = checkClass(clazz);
+        super.originStr = checkClass(clazz);
     }
 
     @Override
     public void parse() {
-        Matcher matcher = wordPattern.matcher(clazz);
+        Matcher matcher = wordPattern.matcher(super.originStr);
 
         while (matcher.find()) {
             Word word = new Word(matcher.group().trim());
             word.parse();
-            wordsAndDelimiters.add(word);
+            super.parsedList.add(word);
 
             char delimiter = ' ';
-            for (int i = matcher.end(); i < clazz.length() && Delimiter.isCodeDelimiter(delimiter = clazz.charAt(i)); i++) {
-                wordsAndDelimiters.add(new Delimiter(delimiter));
+            for (int i = matcher.end(); i < super.originStr.length() && Delimiter.isCodeDelimiter(delimiter = super.originStr.charAt(i)); i++) {
+                super.parsedList.add(new Delimiter(delimiter));
             }
         }
-    }
-
-    @Override
-    public String compose() {
-        StringBuilder strBuf = new StringBuilder();
-
-        wordsAndDelimiters.stream().forEach((parseObj) -> {
-            strBuf.append(parseObj.compose());
-        });
-
-        return strBuf.toString();
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable sentencePart : wordsAndDelimiters) {
-            result.addAll(sentencePart.getWords());
-        }
-
-        return result;
     }
 
     @Override
     public void pollOrderedWords(Queue<Word> queue) {
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (int i = 0; i < wordsAndDelimiters.size(); i++) {
+        for (int i = 0; i < super.parsedList.size(); i++) {
             if (queue.isEmpty()) {
                 break;
             }
 
-            if (wordsAndDelimiters.get(i) instanceof Word) {
-                wordsAndDelimiters.set(i, queue.poll());
+            if (super.parsedList.get(i) instanceof Word) {
+                super.parsedList.set(i, queue.poll());
             }
         }
     }
 
     @Override
     public String toString() {
-        return "Class{" + "clazz=" + clazz + '}';
+        return "Class{" + "clazz=" + super.originStr + '}';
     }
 
     /**
@@ -142,7 +108,7 @@ public class Class implements Parsable {
                 + "}\n"
                 + "}").trim());
         clazz.parse();
-        System.out.println(clazz.wordsAndDelimiters);
+        System.out.println(clazz.parsedList);
         System.out.println(clazz.compose());
         System.out.println(clazz.getWords());
     }

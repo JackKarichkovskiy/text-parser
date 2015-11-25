@@ -5,12 +5,10 @@
  */
 package textparser.sentence;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import textparser.parser.Parsable;
+import textparser.parser.AbstractParsable;
 import textparser.symbol.delimiter.Delimiter;
 import textparser.utils.TextParserUtils;
 import textparser.utils.regex.Regex;
@@ -21,7 +19,7 @@ import textparser.word.Word;
  *
  * @author Karichkovskiy Yevhen
  */
-public class Sentence implements Parsable {
+public class Sentence extends AbstractParsable {
 
     /**
      * Regex pattern for sentence validating.
@@ -33,69 +31,37 @@ public class Sentence implements Parsable {
      */
     private final Pattern wordPattern = Regex.IS_WORD.getPattern();
 
-    /**
-     * The origin sentence string.
-     */
-    private final String sentence;
-
-    /**
-     * The list of words and delimiters in sentence.
-     */
-    private final List<Parsable> wordsAndDelimiters = new ArrayList<>();
-
     public Sentence(String sentence) {
-        this.sentence = checkSentence(sentence);
+        super.originStr = checkSentence(sentence);
     }
 
     @Override
     public void parse() {
-        Matcher matcher = wordPattern.matcher(sentence);
+        Matcher matcher = wordPattern.matcher(super.originStr);
 
         while (matcher.find()) {
             Word word = new Word(matcher.group().trim());
             word.parse();
-            wordsAndDelimiters.add(word);
+            super.parsedList.add(word);
 
             char delimiter = ' ';
-            for (int i = matcher.end(); i < sentence.length() && Delimiter.isDelimiter(delimiter = sentence.charAt(i)); i++) {
-                wordsAndDelimiters.add(new Delimiter(delimiter));
+            for (int i = matcher.end(); i < super.originStr.length() && Delimiter.isDelimiter(delimiter = super.originStr.charAt(i)); i++) {
+                super.parsedList.add(new Delimiter(delimiter));
             }
         }
-    }
-
-    @Override
-    public String compose() {
-        StringBuilder strBuf = new StringBuilder();
-
-        wordsAndDelimiters.stream().forEach((parseObj) -> {
-            strBuf.append(parseObj.compose());
-        });
-
-        return strBuf.toString();
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable sentencePart : wordsAndDelimiters) {
-            result.addAll(sentencePart.getWords());
-        }
-
-        return result;
     }
 
     @Override
     public void pollOrderedWords(Queue<Word> queue) {
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (int i = 0; i < wordsAndDelimiters.size(); i++) {
+        for (int i = 0; i < super.parsedList.size(); i++) {
             if (queue.isEmpty()) {
                 break;
             }
 
-            if (wordsAndDelimiters.get(i) instanceof Word) {
-                wordsAndDelimiters.set(i, queue.poll());
+            if (super.parsedList.get(i) instanceof Word) {
+                super.parsedList.set(i, queue.poll());
             }
         }
     }
@@ -106,13 +72,13 @@ public class Sentence implements Parsable {
 
     @Override
     public String toString() {
-        return "Sentence{" + "sentence=" + sentence + '}';
+        return "Sentence{" + "sentence=" + super.originStr + '}';
     }
 
     public static void main(String[] args) {
         Sentence sentence = new Sentence("  It's a   very good day, isn't it?!!  ".trim());
         sentence.parse();
-        System.out.println(sentence.wordsAndDelimiters);
+        System.out.println(sentence.parsedList);
         System.out.println(sentence.getWords());
     }
 

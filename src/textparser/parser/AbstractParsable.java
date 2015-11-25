@@ -19,11 +19,7 @@ public abstract class AbstractParsable implements Parsable {
 
     protected String originStr;
 
-    protected final List<AbstractParsable> parsedList = new ArrayList<>();
-
-    public AbstractParsable(String originStr) {
-        this.originStr = TextParserUtils.checkNotNull(originStr);
-    }
+    protected final List<Parsable> parsedList = new ArrayList<>();
 
     @Override
     public String compose() {
@@ -43,8 +39,8 @@ public abstract class AbstractParsable implements Parsable {
     public List<Word> getWords() {
         List<Word> result = new ArrayList<>();
 
-        for (Parsable parsedPart : parsedList) {
-            result.addAll(parsedPart.getWords());
+        for (Parsable parsedEl : parsedList) {
+            result.addAll(parsedEl.getWords());
         }
 
         return result;
@@ -54,8 +50,8 @@ public abstract class AbstractParsable implements Parsable {
     public void pollOrderedWords(Queue<Word> queue) {
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (Parsable sentence : parsedList) {
-            sentence.pollOrderedWords(queue);
+        for (Parsable parsedEl : parsedList) {
+            parsedEl.pollOrderedWords(queue);
         }
     }
 

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import textparser.parser.AbstractParsable;
 import textparser.parser.Parsable;
 import textparser.symbol.delimiter.Delimiter;
 import textparser.utils.TextParserUtils;
@@ -20,7 +21,7 @@ import textparser.word.Word;
  * The class represents the field of class.
  * @author Karichkovskiy Yevhen
  */
-public class Field implements Parsable{
+public class Field extends AbstractParsable{
 
     /**
      * Regex pattern for field validating.
@@ -31,57 +32,25 @@ public class Field implements Parsable{
      * Regex pattern for word validating.
      */
     private final Pattern wordPattern = Regex.IS_IDENTIFIER.getPattern();
-    
-    /**
-     * The origin field string.
-     */
-    private String field;
-    
-    /**
-     * The list of words and delimiters in field.
-     */
-    private final List<Parsable> wordsAndDelimiters = new ArrayList<>();
 
     public Field(String field) {
-        this.field = checkField(field);
+        super.originStr = checkField(field);
     }
     
     @Override
     public void parse() {
-        Matcher matcher = wordPattern.matcher(field);
+        Matcher matcher = wordPattern.matcher(super.originStr);
 
         while (matcher.find()) {
             Word word = new Word(matcher.group().trim());
             word.parse();
-            wordsAndDelimiters.add(word);
+            super.parsedList.add(word);
 
             char delimiter = ' ';
-            for (int i = matcher.end(); i < field.length() && Delimiter.isCodeDelimiter(delimiter = field.charAt(i)); i++) {
-                wordsAndDelimiters.add(new Delimiter(delimiter));
+            for (int i = matcher.end(); i < super.originStr.length() && Delimiter.isCodeDelimiter(delimiter = super.originStr.charAt(i)); i++) {
+                super.parsedList.add(new Delimiter(delimiter));
             }
         }
-    }
-
-    @Override
-    public String compose() {
-        StringBuilder strBuf = new StringBuilder();
-
-        wordsAndDelimiters.stream().forEach((parseObj) -> {
-            strBuf.append(parseObj.compose());
-        });
-
-        return strBuf.toString();
-    }
-
-    @Override
-    public List<Word> getWords() {
-        List<Word> result = new ArrayList<>();
-
-        for (Parsable sentencePart : wordsAndDelimiters) {
-            result.addAll(sentencePart.getWords());
-        }
-
-        return result;
     }
 
     @Override
@@ -89,13 +58,13 @@ public class Field implements Parsable{
         
         queue = TextParserUtils.checkNotNull(queue);
 
-        for (int i = 0; i < wordsAndDelimiters.size(); i++) {
+        for (int i = 0; i < super.parsedList.size(); i++) {
             if (queue.isEmpty()) {
                 break;
             }
 
-            if (wordsAndDelimiters.get(i) instanceof Word) {
-                wordsAndDelimiters.set(i, queue.poll());
+            if (super.parsedList.get(i) instanceof Word) {
+                super.parsedList.set(i, queue.poll());
             }
         }
     }
@@ -107,7 +76,7 @@ public class Field implements Parsable{
     public static void main(String[] args) {
         Field field = new Field("  public  static int i = 10;  ".trim());
         field.parse();
-        System.out.println(field.wordsAndDelimiters);
+        System.out.println(field.parsedList);
         System.out.println(field.compose());
         System.out.println(field.getWords());
     }

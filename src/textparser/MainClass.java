@@ -13,6 +13,7 @@ import textparser.io.View;
 
 /**
  * Class initializes and starts the parser.
+ *
  * @author Karichkovskiy Yevhen
  */
 public class MainClass {
